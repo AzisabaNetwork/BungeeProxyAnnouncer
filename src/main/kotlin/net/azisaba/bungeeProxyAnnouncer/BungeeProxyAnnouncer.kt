@@ -18,14 +18,22 @@ class BungeeProxyAnnouncer: Plugin() {
                 val cc = cp.get(s.replace("/", "."))
                 val methodChannelRead = cc.getMethod("channelRead", "(Lio/netty/channel/ChannelHandlerContext;Ljava/lang/Object;)V")
                 methodChannelRead.insertBefore("""
-                    if ($2 instanceof io.netty.handler.codec.haproxy.HAProxyMessage) {
-                        net.azisaba.bungeeProxyAnnouncer.PlayerIPAddressList.handle((io.netty.handler.codec.haproxy.HAProxyMessage) $2, channel.getRemoteAddress());
+                    try {
+                        if ($2 instanceof io.netty.handler.codec.haproxy.HAProxyMessage) {
+                            net.azisaba.bungeeProxyAnnouncer.PlayerIPAddressList.handle((io.netty.handler.codec.haproxy.HAProxyMessage) $2, channel.getRemoteAddress());
+                        }
+                    } catch (Throwable throwable) {
+                        throwable.printStackTrace();
                     }
                 """.trimIndent())
                 val methodChannelInactive = cc.getMethod("channelInactive", "(Lio/netty/channel/ChannelHandlerContext;)V")
                 methodChannelInactive.insertBefore("""
-                    if (handler != null) {
-                        net.azisaba.bungeeProxyAnnouncer.PlayerIPAddressList.remove(channel.getRemoteAddress());
+                    try {
+                        if (handler != null) {
+                            net.azisaba.bungeeProxyAnnouncer.PlayerIPAddressList.remove(channel.getRemoteAddress());
+                        }
+                    } catch (Throwable throwable) {
+                        throwable.printStackTrace();
                     }
                 """.trimIndent())
                 return@registerClassLoadHook cc.toBytecode()
