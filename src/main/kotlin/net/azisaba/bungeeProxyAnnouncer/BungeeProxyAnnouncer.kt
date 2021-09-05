@@ -6,7 +6,7 @@ import net.md_5.bungee.api.plugin.Plugin
 
 @Suppress("unused")
 class BungeeProxyAnnouncer: Plugin() {
-    override fun onEnable() {
+    override fun onLoad() {
         val classPath = BungeeProxyAnnouncer::class.java.protectionDomain.codeSource.location.toURI().path
         NativeUtil.appendToSystemClassLoaderSearch(classPath)
         NativeUtil.registerClassLoadHook { _, s, _, _, _ ->
