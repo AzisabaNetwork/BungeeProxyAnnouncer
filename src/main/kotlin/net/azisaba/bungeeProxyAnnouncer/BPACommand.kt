@@ -76,7 +76,7 @@ object BPACommand: Command("bpa", "bungeeproxyannouncer.command.bpa", "bungeepro
         return emptyList()
     }
 
-    private fun List<String>.filter(s: String): List<String> = distinct().filter { s1 -> s1.lowercase().startsWith(s.lowercase()) }
+    private fun List<String?>.filter(s: String): List<String> = distinct().filterNotNull().filter { s1 -> s1.lowercase().startsWith(s.lowercase()) }
 
     private fun InetSocketAddress.getIPAddress() = address.getIPAddress()
     private fun InetAddress.getIPAddress() = hostAddress.replaceFirst("(.*)%.*".toRegex(), "$1")
