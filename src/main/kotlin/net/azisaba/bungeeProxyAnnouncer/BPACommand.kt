@@ -23,32 +23,37 @@ object BPACommand: Command("bpa", "bungeeproxyannouncer.command.bpa", "bungeepro
             }
             val list = args.toMutableList()
             list.removeAt(0)
-            val ip = InetAddress.getByName(list.removeAt(0)).getIPAddress()
-            val message = ChatColor.translateAlternateColorCodes('&', list.joinToString(" "))
-            ProxyServer.getInstance().players
-                .filter { it.socketAddress is InetSocketAddress }
-                .filter { PlayerIPAddressList.map[it.getIPAndPort()] == ip }
-                .forEach {
-                    if (!message.startsWith("[") && !message.startsWith("{")) {
-                        return@forEach it.sendMessage(*TextComponent.fromLegacyText(message))
+            Thread {
+                val ip = InetAddress.getByName(list.removeAt(0)).getIPAddress()
+                val message = ChatColor.translateAlternateColorCodes('&', list.joinToString(" "))
+                ProxyServer.getInstance().players
+                    .filter { it.socketAddress is InetSocketAddress }
+                    .filter { PlayerIPAddressList.map[it.getIPAndPort()] == ip }
+                    .forEach {
+                        if (!message.startsWith("[") && !message.startsWith("{")) {
+                            return@forEach it.sendMessage(*TextComponent.fromLegacyText(message))
+                        }
+                        try {
+                            it.sendMessage(*ComponentSerializer.parse(message))
+                        } catch (e: Exception) {
+                            it.sendMessage(*TextComponent.fromLegacyText(message))
+                        }
                     }
-                    try {
-                        it.sendMessage(*ComponentSerializer.parse(message))
-                    } catch (e: Exception) {
-                        it.sendMessage(*TextComponent.fromLegacyText(message))
-                    }
-                }
+            }.start()
         } else if (args[0] == "list" || args[0] == "l") {
             if (args.size < 2) {
                 sender.sendMessage(*TextComponent.fromLegacyText("${ChatColor.RED}/bpa list <IP Address of proxy server>"))
                 return
             }
-            val ip = InetAddress.getByName(args[1]).getIPAddress()
-            val players = ChatColor.YELLOW.toString() + ProxyServer.getInstance().players
-                .filter { it.socketAddress is InetSocketAddress }
-                .filter { PlayerIPAddressList.map[it.getIPAndPort()] == ip }
-                .joinToString("${ChatColor.WHITE}, ${ChatColor.YELLOW}")
-            sender.sendMessage(*TextComponent.fromLegacyText("${ChatColor.GREEN}${ip}で接続しているプレイヤー: $players"))
+            Thread {
+                val ip = InetAddress.getByName(args[1]).getIPAddress()
+                val players = ChatColor.YELLOW.toString() + ProxyServer.getInstance().players
+                    .toMutableList()
+                    .filter { it.socketAddress is InetSocketAddress }
+                    .filter { PlayerIPAddressList.map[it.getIPAndPort()] == ip }
+                    .joinToString("${ChatColor.WHITE}, ${ChatColor.YELLOW}")
+                sender.sendMessage(*TextComponent.fromLegacyText("${ChatColor.GREEN}${ip}で接続しているプレイヤー: $players"))
+            }.start()
         } else if (args[0] == "check" || args[0] == "c") {
             if (args.size < 2) {
                 sender.sendMessage(*TextComponent.fromLegacyText("${ChatColor.RED}/bpa check <Player>"))
