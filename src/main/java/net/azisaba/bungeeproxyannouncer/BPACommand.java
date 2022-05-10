@@ -25,7 +25,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 public record BPACommand(ProxyServer proxy) {
-    private static final GsonComponentSerializer GSON_COMPONENT_SERIALIZER = GsonComponentSerializer.gson();
+    public static final GsonComponentSerializer GSON_COMPONENT_SERIALIZER = GsonComponentSerializer.gson();
     private static final LegacyComponentSerializer LEGACY_COMPONENT_SERIALIZER = LegacyComponentSerializer.builder()
             .character('&')
             .extractUrls()
@@ -94,24 +94,15 @@ public record BPACommand(ProxyServer proxy) {
 
     private int executeAnnounce(CommandSource source, String host, String message) {
         try {
-            final Component component;
-            Component component1 = null;
-            try {
-                if (message.startsWith("{") && message.startsWith("[")) {
-                    component1 = GSON_COMPONENT_SERIALIZER.deserialize(message);
-                }
-            } catch (Exception ignore) {
+            Component component = null;
+            if (message.startsWith("{") || message.startsWith("[")) {
+                component = GSON_COMPONENT_SERIALIZER.deserializeOrNull(message);
             }
-            if (component1 == null) {
-                component1 = LEGACY_COMPONENT_SERIALIZER.deserialize(message);
+            if (component == null) {
+                component = LEGACY_COMPONENT_SERIALIZER.deserialize(message);
             }
-            component = component1;
             var ip = InetAddress.getByName(host).getHostAddress().replaceFirst("(.*)%.*", "$1");
-            proxy.getAllPlayers()
-                    .stream()
-                    .filter(player -> player.getRemoteAddress() != null)
-                    .filter(player -> ip.equals(PlayerIPAddressList.map.get(PlayerUtil.getIPAndPort(player))))
-                    .forEach(player -> player.sendMessage(component));
+            PlayerUtil.announce(proxy, ip, component, true);
             source.sendMessage(Component.text("中継鯖 " + ip + " から接続している全プレイヤーに以下のメッセージを表示しました", NamedTextColor.GREEN));
             source.sendMessage(component);
         } catch (Exception e) {
@@ -126,7 +117,6 @@ public record BPACommand(ProxyServer proxy) {
             var players = proxy
                     .getAllPlayers()
                     .stream()
-                    .filter(player -> player.getRemoteAddress() != null)
                     .filter(player -> ip.equals(PlayerIPAddressList.map.get(PlayerUtil.getIPAndPort(player))))
                     .map(player -> Component.text(player.getUsername(), NamedTextColor.YELLOW))
                     .toList();
