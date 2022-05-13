@@ -42,7 +42,6 @@ public class BungeeProxyAnnouncer {
 
     private void transform() throws Exception {
         var classpath = BungeeProxyAnnouncer.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
-        NativeUtil.appendToSystemClassLoaderSearch(classpath);
         NativeUtil.registerClassLoadHook((classLoader, s, aClass, protectionDomain, bytes) -> {
             if (!s.equals("com/velocitypowered/proxy/connection/MinecraftConnection")) {
                 return null;
@@ -63,7 +62,9 @@ public class BungeeProxyAnnouncer {
                         }
                 """;
                 methodChannelRead.insertBefore(methodBody);
-                return cc.toBytecode();
+                byte[] bc = cc.toBytecode();
+                NativeUtil.appendToSystemClassLoaderSearch(classpath);
+                return bc;
             } catch (Exception e) {
                 logger.error("Failed to transform MinecraftConnection", e);
             }
