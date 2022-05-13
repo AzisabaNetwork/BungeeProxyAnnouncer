@@ -9,6 +9,7 @@ import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.plugin.Dependency;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.proxy.ProxyServer;
+import javassist.ByteArrayClassPath;
 import javassist.ClassPool;
 import net.azisaba.bungeeproxyannouncer.connection.HAProxyMessageHandler;
 import net.azisaba.bungeeproxyannouncer.util.PlayerUtil;
@@ -47,9 +48,9 @@ public class BungeeProxyAnnouncer {
                 return null;
             }
             try {
-                var cp = ClassPool.getDefault();
-                logger.info("Adding {} to classpath", classpath);
+                var cp = new ClassPool(true);
                 cp.appendClassPath(classpath);
+                cp.insertClassPath(new ByteArrayClassPath(s.replace('/', '.'), bytes));
                 var cc = cp.get(s.replace("/", "."));
                 var methodChannelRead = cc.getMethod("channelRead", "(Lio/netty/channel/ChannelHandlerContext;Ljava/lang/Object;)V");
                 var methodBody = """
